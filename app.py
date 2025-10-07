@@ -1,17 +1,30 @@
 import streamlit as st
-import requests
-import json
+import openai
 
-API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
-headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
+# Configuración de OpenAI
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-def query(payload):
-    response = requests.post(API_URL, headers=headers, json=payload)
-    return response.json()
+st.set_page_config(page_title="ChatGPT Clone", page_icon="🤖")
+st.title("🤖 Mi ChatGPT Personal")
+st.write("¡Hola! Soy tu asistente basado en ChatGPT. ¿En qué puedo ayudarte?")
 
-st.title("🤖 Mi Chatbot IA Gratuito")
-user_input = st.text_input("Pregúntame lo que quieras:")
+# Input del usuario
+pregunta = st.text_input("Escribe tu mensaje:")
 
-if user_input:
-    output = query({"inputs": user_input})
-    st.write("**Respuesta:**", output[0]['generated_text'])
+if pregunta:
+    try:
+        with st.spinner("Pensando..."):
+            # Llamar a la API de OpenAI
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": pregunta}],
+                max_tokens=500
+            )
+        
+        # Mostrar la respuesta
+        respuesta = response.choices[0].message.content
+        st.success("Respuesta:")
+        st.write(respuesta)
+        
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
