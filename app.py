@@ -13,7 +13,9 @@ pregunta = st.text_input("Escribe tu pregunta aquí:")
 
 if pregunta:
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        # Usar el modelo más reciente
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
         with st.spinner("Pensando..."):
             respuesta = model.generate_content(pregunta)
         
@@ -21,4 +23,4 @@ if pregunta:
         st.write(respuesta.text)
         
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error: {str(e)}")
