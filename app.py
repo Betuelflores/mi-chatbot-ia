@@ -1,75 +1,89 @@
 import streamlit as st
 import requests
-import json
+import random
 import time
 
-st.set_page_config(page_title="Mi Chatbot Gratuito", page_icon="🤖")
-st.title("🤖 Mi Asistente IA 100% Gratis")
-st.write("¡Hola! Funciono con modelos de Hugging Face usando tu token personal")
+st.set_page_config(page_title="Mi Asistente IA", page_icon="🤖")
+st.title("🤖 Mi Asistente Personal")
+st.write("¡Hola! Estoy aquí para ayudarte con lo que necesites")
 
-# Configuración con TU token
-API_URLS = [
-    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
-    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-    "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
-]
-
+# Configuración mejorada
 headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_TOKEN']}"}
 
-def query_huggingface(prompt, model_url):
-    try:
-        response = requests.post(model_url, headers=headers, json={"inputs": prompt})
-        return response.json()
-    except:
-        return None
+MODELOS = [
+    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
+    "https://api-inquiry.huggingface.co/models/microsoft/DialoGPT-medium",
+    "https://api-inquiry.huggingface.co/models/facebook/blenderbot-400M-distill"
+]
 
-def get_ai_response(user_input):
-    """Obtiene respuesta de múltiples modelos con tu token"""
+def obtener_respuesta_inteligente(mensaje):
+    """Versión mejorada con respuestas más contextuales"""
     
-    # Intentar con cada modelo
-    for model_url in API_URLS:
+    # Primero intentar con Hugging Face
+    for modelo_url in MODELOS:
         try:
-            result = query_huggingface(user_input, model_url)
+            response = requests.post(
+                modelo_url,
+                headers=headers,
+                json={"inputs": mensaje, "parameters": {"max_length": 150}},
+                timeout=10
+            )
             
-            if result and isinstance(result, list) and len(result) > 0:
-                response_text = result[0].get('generated_text', '')
-                if response_text and len(response_text) > 10:
-                    return response_text
-                    
-        except Exception as e:
+            if response.status_code == 200:
+                resultado = response.json()
+                if resultado and isinstance(resultado, list) and len(resultado) > 0:
+                    texto = resultado[0].get('generated_text', '')
+                    if texto and len(texto) > 15:
+                        return texto
+            time.sleep(1)
+        except:
             continue
     
-    # Respuestas amigables si todos los modelos fallan
-    fallback_responses = [
-        "¡Hola! Soy tu asistente IA. En este momento los servidores gratuitos están muy solicitados, pero estoy aquí para ayudarte. ¿En qué más puedo asistirte?",
-        "¡Hola! Los sistemas de IA están procesando muchas solicitudes. ¿Puedes reformular tu pregunta o intentar en un minuto?",
-        "¡Hola! Veo que quieres conversar. Los servicios gratuitos están temporariamente ocupados, pero me encanta ayudarte. ¿Qué más te gustaría saber?",
-        "¡Hola! Los modelos de IA están cargando debido a alta demanda. Mientras tanto, ¿puedo ayudarte con algo específico?"
-    ]
+    # RESPUESTAS MEJORADAS Y CONTEXTUALES
+    mensaje_lower = mensaje.lower()
     
-    import random
-    return random.choice(fallback_responses)
+    # Detectar tipo de pregunta
+    if any(palabra in mensaje_lower for palabra in ['hola', 'hi', 'hello', 'buenas']):
+        return "¡Hola! 👋 Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?"
+    
+    elif any(palabra in mensaje_lower for palabra in ['código', 'code', 'program', 'python', 'script']):
+        return "¡Claro! Puedo ayudarte con código Python. ¿Qué tipo de script necesitas? Por ejemplo: 'quiero un script para descargar videos' o 'necesito un bot de Telegram'"
+    
+    elif any(palabra in mensaje_lower for palabra in ['cómo', 'how', 'funciona', 'ayuda']):
+        return "Puedo ayudarte con: programación, ideas de proyectos, explicaciones técnicas, y mucho más. ¿Qué necesitas específicamente?"
+    
+    elif '?' in mensaje:
+        return "Buena pregunta. Los servicios de IA están ocupados en este momento, pero puedo intentar ayudarte si reformulas tu pregunta o me das más detalles."
+    
+    else:
+        respuestas_contextuales = [
+            f"Entiendo que quieres hablar sobre '{mensaje}'. Los servidores de IA están temporariamente ocupados, pero estoy aquí para ayudarte. ¿Puedes darme más detalles?",
+            f"Interesante pregunta sobre {mensaje}. Los modelos están procesando muchas solicitudes. ¿Te importaría reformularla o intentar en unos minutos?",
+            f"¡Me gusta tu mensaje! Los servicios gratuitos están saturados ahora mismo. Mientras se liberan, ¿hay algo específico en lo que pueda asistirte?",
+            f"Recibí tu mensaje. Los sistemas de IA están al máximo de capacidad. ¿Puedes intentar de nuevo en un momento o ser más específico en tu consulta?"
+        ]
+        return random.choice(respuestas_contextuales)
 
 # Interfaz de chat mejorada
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+if "historial" not in st.session_state:
+    st.session_state.historial = []
 
-# Mostrar historial de chat
-for message in st.session_state.chat_history:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Mostrar historial
+for mensaje in st.session_state.historial:
+    with st.chat_message(mensaje["role"]):
+        st.markdown(mensaje["content"])
 
 # Input del usuario
-if user_input := st.chat_input("Escribe tu mensaje aquí..."):
-    # Mostrar mensaje del usuario
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+if pregunta := st.chat_input("Escribe tu pregunta aquí..."):
+    # Agregar pregunta del usuario
+    st.session_state.historial.append({"role": "user", "content": pregunta})
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(pregunta)
     
-    # Obtener y mostrar respuesta
+    # Obtener respuesta mejorada
     with st.chat_message("assistant"):
-        with st.spinner("Conectando con servicios IA..."):
-            response = get_ai_response(user_input)
+        with st.spinner("Analizando tu pregunta..."):
+            respuesta = obtener_respuesta_inteligente(pregunta)
         
-        st.markdown(response)
-        st.session_state.chat_history.append({"role": "assistant", "content": response})
+        st.markdown(respuesta)
+        st.session_state.historial.append({"role": "assistant", "content": respuesta})
