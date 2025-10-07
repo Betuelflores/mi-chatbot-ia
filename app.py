@@ -1,19 +1,17 @@
 import streamlit as st
-import openai
+import requests
+import json
 
-# Configuración OpenAI
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
+headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_API_KEY']}"}
 
-st.title("🤖 Mi Chatbot IA Global")
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.json()
+
+st.title("🤖 Mi Chatbot IA Gratuito")
 user_input = st.text_input("Pregúntame lo que quieras:")
 
 if user_input:
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": user_input}],
-            max_tokens=500
-        )
-        st.write("**Respuesta:**", response.choices[0].message.content)
-    except Exception as e:
-        st.error(f"Error: {e}")
+    output = query({"inputs": user_input})
+    st.write("**Respuesta:**", output[0]['generated_text'])
