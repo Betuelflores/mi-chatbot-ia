@@ -1,10 +1,17 @@
-from google import genai
+import streamlit as st
+import google.generativeai as genai
 
-client = genai.Client()
+# Configuración simple y directa
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents="Explain how AI works in a few words",
-)
+# Interfaz mínima pero funcional
+st.title("🤖 Mi Chatbot IA")
+user_input = st.text_input("Pregúntame lo que quieras:")
 
-print(response.text)
+if user_input:
+    try:
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(user_input)
+        st.write("**Respuesta:**", response.text)
+    except Exception as e:
+        st.error(f"Error: {e}")
