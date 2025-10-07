@@ -1,27 +1,19 @@
 import streamlit as st
-import google.generativeai as genai
+import openai
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+# Configuración OpenAI
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-st.title("🤖 Mi Chatbot IA")
+st.title("🤖 Mi Chatbot IA Global")
 user_input = st.text_input("Pregúntame lo que quieras:")
 
 if user_input:
     try:
-        # PROBAR MODELOS ALTERNATIVOS
-        modelos = ['gemini-1.0-pro', 'gemini-1.5-flash', 'gemini-1.5-pro']
-        
-        for modelo in modelos:
-            try:
-                model = genai.GenerativeModel(modelo)
-                response = model.generate_content(user_input)
-                st.success(f"✅ Modelo funcionando: {modelo}")
-                st.write("**Respuesta:**", response.text)
-                break
-            except:
-                continue
-        else:
-            st.error("❌ Ningún modelo de Gemini funciona en tu región")
-            
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": user_input}],
+            max_tokens=500
+        )
+        st.write("**Respuesta:**", response.choices[0].message.content)
     except Exception as e:
         st.error(f"Error: {e}")
