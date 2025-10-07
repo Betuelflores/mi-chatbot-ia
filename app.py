@@ -1,30 +1,36 @@
 import streamlit as st
 from openai import OpenAI
 
-# Configuración de OpenAI con la nueva API
+# Configuración de OpenAI
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.set_page_config(page_title="ChatGPT Clone", page_icon="🤖")
-st.title("🤖 Mi ChatGPT Personal")
-st.write("¡Hola! Soy tu asistente basado en ChatGPT. ¿En qué puedo ayudarte?")
+st.set_page_config(page_title="Mi ChatGPT", page_icon="🤖")
+st.title("🤖 Mi Asistente IA")
+st.write("¡Hola! Pregúntame lo que quieras")
 
-# Input del usuario
-pregunta = st.text_input("Escribe tu mensaje:")
+# Chat input
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if pregunta:
-    try:
-        with st.spinner("Pensando..."):
-            # Llamar a la API de OpenAI con la nueva sintaxis
-            response = client.chat.completions.create(
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+if prompt := st.chat_input("Escribe tu mensaje..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        try:
+            stream = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": pregunta}],
-                max_tokens=500
+                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                stream=True,
             )
-        
-        # Mostrar la respuesta
-        respuesta = response.choices[0].message.content
-        st.success("Respuesta:")
-        st.write(respuesta)
-        
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
+            
+            response = st.write_stream(stream)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
