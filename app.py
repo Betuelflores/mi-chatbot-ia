@@ -1,184 +1,199 @@
 import streamlit as st
 import requests
-import random
+import json
 import time
+import random
 
-st.set_page_config(page_title="Asistente Amable", page_icon="😊", layout="wide")
-st.title("😊 Asistente Virtual Amable")
-st.write("¡Hola! Soy tu asistente virtual. Estoy aquí para ayudarte de manera amigable y útil.")
+st.set_page_config(page_title="Asistente Universal de Código", page_icon="🚀", layout="wide")
+st.title("🚀 Asistente Universal de Programación")
+st.markdown("**Como ChatGPT + Gemini + Grok - Pero 100% Gratis y para Todos**")
 
-# Configuración
+# Configuración avanzada
 headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_TOKEN']}"}
 
-MODELOS = [
-    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
-    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium", 
-]
-
-def obtener_respuesta_amable(mensaje, historial):
-    """Sistema de respuestas amable y útil"""
+class AsistenteUniversal:
+    def __init__(self):
+        self.especialidades = {
+            'python': "🐍 Python - Web, Datos, IA, Bots, Automatización",
+            'javascript': "📱 JavaScript - Frontend, Backend, Apps Móviles",
+            'web': "🌐 Desarrollo Web - HTML, CSS, React, APIs",
+            'datos': "📊 Análisis de Datos - Pandas, SQL, Visualización",
+            'ia': "🤖 IA y Machine Learning - Modelos, Procesamiento",
+            'movil': "📱 Apps Móviles - Android, iOS, React Native",
+            'devops': "⚙️ DevOps - Docker, Cloud, Deployment",
+            'bd': "🗄️ Bases de Datos - SQL, NoSQL, Optimización",
+            'seguridad': "🔒 Seguridad - Ethical Hacking, Pentesting",
+            'automatizacion': "⚡ Automatización - Bots, Scripts, Tareas"
+        }
     
-    mensaje = mensaje.lower().strip()
-    
-    # RESPUESTAS AMABLES Y POSITIVAS
-    respuestas_directas = {
-        # Saludos
-        'hola': "¡Hola! 😊 ¿En qué puedo ayudarte hoy?",
-        'hi': "¡Hola! 😊 ¿Cómo puedo asistirte?",
-        'hello': "¡Hello! 😊 How can I help you today?",
-        
-        # Preguntas sobre código
-        'código': "¡Claro! Me encanta ayudar con código Python. ¿Qué tipo de script necesitas? Por ejemplo: automatización, análisis de datos, o una herramienta específica.",
-        'code': "¡Sure! I'd be happy to help with Python code. What kind of script are you thinking about?",
-        'python': "¡Python es genial! 🐍 ¿En qué proyecto estás trabajando? Puedo ayudarte con ideas, código o resolver dudas.",
-        'script': "¡Perfecto! Cuéntame más sobre lo que quieres que haga el script. ¿Es para procesar datos, interactuar con una API, o algo diferente?",
-        
-        # Funcionalidades
-        'qué puedes hacer': "Puedo ayudarte con una variedad de temas: programación en Python, explicaciones técnicas, ideas de proyectos, y más. ¡Solo pregúntame!",
-        'qué sabes hacer': "Sé sobre desarrollo de software, especialmente Python, automatización, análisis de datos, y puedo explicar conceptos de programación. ¡Estoy aquí para ayudarte!",
-        
-        # Agradecimientos
-        'gracias': "¡De nada! 😊 Me alegra poder ayudarte. ¿Hay algo más en lo que pueda asistirte?",
-        'thanks': "You're welcome! 😊 Glad I could help. Let me know if you need anything else.",
-        
-        # Despedidas
-        'adiós': "¡Hasta luego! 👋 Fue un gusto ayudarte. ¡Éxito en tu proyecto!",
-        'bye': "Goodbye! 👋 Wishing you success with your project!",
-        'chao': "¡Chao! 😊 Espero verte pronto. ¡Cuídate!",
-    }
-    
-    # Buscar respuesta directa primero
-    for palabra, respuesta in respuestas_directas.items():
-        if palabra in mensaje:
-            return respuesta
-    
-    # Si es una pregunta específica, dar respuestas más elaboradas
-    if '?' in mensaje or any(palabra in mensaje for palabra in ['cómo', 'how', 'qué es', 'what is']):
-        preguntas_especificas = {
-            'python': "Python es un lenguaje de programación versátil y fácil de aprender. Es excelente para principiantes y poderoso para expertos. ¿Te interesa alguna librería en particular?",
-            'script': "Un script es un programa que automatiza tareas. En Python, podemos escribir scripts para casi cualquier cosa. ¿Tienes una tarea específica que quieres automatizar?",
-            'web scraping': "El web scraping es una técnica para extraer información de sitios web. En Python, usamos bibliotecas como BeautifulSoup y Scrapy. ¿Qué datos te gustaría obtener?",
-            'automatización': "La automatización con Python puede hacer tu vida más fácil. Podemos automatizar tareas repetitivas como procesar archivos, enviar correos, o incluso controlar otras aplicaciones.",
-            'api': "Las APIs son interfaces que permiten que diferentes aplicaciones se comuniquen. En Python, la librería 'requests' es muy popular para trabajar con APIs.",
-            'datos': "El análisis de datos es una de las fortalezas de Python. Con librerías como Pandas y NumPy, podemos procesar y analizar datos eficientemente.",
+    def detectar_tema(self, mensaje):
+        mensaje = mensaje.lower()
+        temas = {
+            'python': ['python', 'py', 'pandas', 'django', 'flask', 'script'],
+            'javascript': ['javascript', 'js', 'node', 'react', 'vue', 'angular'],
+            'web': ['html', 'css', 'web', 'página', 'website', 'frontend'],
+            'datos': ['datos', 'data', 'excel', 'csv', 'análisis', 'pandas'],
+            'ia': ['ia', 'ai', 'machine learning', 'modelo', 'neuronal'],
+            'movil': ['móvil', 'mobile', 'android', 'ios', 'app'],
+            'devops': ['docker', 'cloud', 'deploy', 'servidor', 'nginx'],
+            'bd': ['base de datos', 'mysql', 'sql', 'mongodb', 'postgresql'],
+            'seguridad': ['hacking', 'seguridad', 'pentest', 'vulnerabilidad'],
+            'automatizacion': ['automatizar', 'bot', 'script', 'tarea automática']
         }
         
-        for tema, respuesta in preguntas_especificas.items():
-            if tema in mensaje:
-                return respuesta
+        for tema, palabras in temas.items():
+            if any(palabra in mensaje for palabra in palabras):
+                return tema
+        return 'general'
+
+def obtener_respuesta_universal(mensaje, historial, tema_detectado):
+    """Motor de respuestas universal para cualquier tema técnico"""
     
-    # Intentar con modelos de Hugging Face solo si no tenemos respuesta directa
-    contexto = "\n".join([f"{msg['role']}: {msg['content']}" for msg in historial[-4:]])
-    prompt_con_contexto = f"{contexto}\nuser: {mensaje}\nassistant:"
+    asistente = AsistenteUniversal()
+    tema_nombre = asistente.especialidades.get(tema_detectado, "Programación General")
     
-    for modelo_url in MODELOS:
+    # MODELOS AVANZADOS PARA DIFERENTES TAREAS
+    modelos_tecnicos = [
+        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
+        "https://api-inference.huggingface.co/models/codeparrot/codeparrot",
+        "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+        "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
+    ]
+    
+    # PROMPT ESPECIALIZADO SEGÚN EL TEMA
+    prompts_especializados = {
+        'python': f"""Eres un experto en Python. Responde sobre: {mensaje}
+        
+Ejemplos de ayuda que puedes dar:
+- Escribir código Python completo
+- Explicar conceptos de programación
+- Debuggear errores
+- Optimizar código
+- Enseñar mejores prácticas
+- Sugerir librerías adecuadas
+
+Respuesta útil:""",
+
+        'javascript': f"""Eres un experto en JavaScript. Responde sobre: {mensaje}
+
+Puedes ayudar con:
+- Código JavaScript/Node.js
+- Frameworks (React, Vue, Angular)
+- APIs y servicios web
+- Desarrollo frontend/backend
+- Solución de problemas
+
+Respuesta técnica:""",
+
+        'web': f"""Eres un experto en desarrollo web. Responde sobre: {mensaje}
+
+Áreas de ayuda:
+- HTML/CSS/JavaScript
+- Frameworks web
+- Diseño responsive
+- Performance optimization
+- SEO y accesibilidad
+
+Respuesta web:""",
+
+        'datos': f"""Eres un experto en análisis de datos. Responde sobre: {mensaje}
+
+Puedes asistir con:
+- Análisis con Pandas/NumPy
+- Visualización de datos
+- Limpieza y procesamiento
+- SQL y consultas
+- Machine Learning básico
+
+Respuesta datos:""",
+
+        'general': f"""Eres un asistente universal de programación. Responde sobre: {mensaje}
+
+Puedes ayudar con:
+- Cualquier lenguaje de programación
+- Arquitectura de software
+- Resolución de problemas
+- Mejores prácticas
+- Recursos de aprendizaje
+
+Respuesta general:"""
+    }
+    
+    prompt = prompts_especializados.get(tema_detectado, prompts_especializados['general'])
+    
+    # Intentar con modelos técnicos
+    for modelo_url in modelos_tecnicos:
         try:
             response = requests.post(
                 modelo_url,
                 headers=headers,
-                json={"inputs": prompt_con_contexto, "parameters": {"max_length": 150}},
-                timeout=8
+                json={
+                    "inputs": prompt,
+                    "parameters": {
+                        "max_length": 300,
+                        "temperature": 0.7,
+                        "do_sample": True
+                    }
+                },
+                timeout=15
             )
             
             if response.status_code == 200:
                 resultado = response.json()
                 if resultado and isinstance(resultado, list) and len(resultado) > 0:
                     texto = resultado[0].get('generated_text', '')
-                    if texto and len(texto) > 10:
-                        if "assistant:" in texto:
-                            texto = texto.split("assistant:")[-1].strip()
-                        return texto
+                    if texto and len(texto) > 25:
+                        # Limpiar y formatear la respuesta
+                        if "Respuesta" in texto:
+                            texto = texto.split("Respuesta")[-1].replace(":", "").strip()
+                        return f"**🧠 {tema_nombre}:**\n\n{texto}"
             time.sleep(1)
         except:
             continue
     
-    # RESPUESTAS AMABLES POR DEFECTO - NUNCA GENÉRICAS O TÓXICAS
-    respuestas_amables = [
-        "¡Interesante pregunta! 😊 ¿Podrías darme más detalles para poder ayudarte mejor?",
-        "Me gusta tu consulta. ¿Hay algo específico que te gustaría saber o implementar?",
-        "¡Claro! Para darte una mejor respuesta, ¿podrías contarme más sobre lo que necesitas?",
-        "Entiendo lo que preguntas. ¿Quieres que profundice en algún aspecto en particular?",
-        "¡Perfecto! Estoy aquí para ayudarte. ¿En qué aspecto específico necesitas asistencia?",
-    ]
-    
-    return random.choice(respuestas_amables)
-
-# INICIALIZAR HISTORIAL DE CHAT
-if "historial" not in st.session_state:
-    st.session_state.historial = []
-
-# BARRA LATERAL AMIGABLE
-with st.sidebar:
-    st.header("⚙️ Controles del Chat")
-    st.write(f"**Mensajes en la conversación:** {len(st.session_state.historial)}")
-    
-    if st.button("🧹 Limpiar conversación", use_container_width=True, type="secondary"):
-        st.session_state.historial = []
-        st.rerun()
-    
-    st.markdown("---")
-    st.write("**💡 Ejemplos para probar:**")
-    st.code("""
-- Hola
-- Necesito ayuda con código Python
-- ¿Qué puedes hacer?
-- Cómo funciona una API
-- Gracias
-    """)
-    
-    st.markdown("---")
-    st.write("**🌟 Características:**")
-    st.write("• 🤝 Respuestas amables")
-    st.write("• 💬 Historial completo")
-    st.write("• 🆓 100% gratuito")
-    st.write("• 🌍 Para todos los usuarios")
-
-# ÁREA PRINCIPAL DE CHAT
-st.header("💬 Conversación en Tiempo Real")
-
-# MOSTRAR HISTORIAL COMPLETO DE CONVERSACIÓN
-for mensaje in st.session_state.historial:
-    if mensaje["role"] == "user":
-        # Mensaje del usuario - alineado a la derecha o con estilo diferente
-        with st.chat_message("user"):
-            st.markdown(f"**Tú:** {mensaje['content']}")
-    else:
-        # Respuesta del asistente - alineado a la izquierda
-        with st.chat_message("assistant"):
-            st.markdown(f"**Asistente:** {mensaje['content']}")
-
-# INPUT DEL USUARIO EN LA PARTE INFERIOR
-st.markdown("---")
-if pregunta := st.chat_input("Escribe tu mensaje aquí...", key="chat_input"):
-    
-    # MOSTRAR INMEDIATAMENTE EL MENSAJE DEL USUARIO
-    with st.chat_message("user"):
-        st.markdown(f"**Tú:** {pregunta}")
-    
-    # AGREGAR AL HISTORIAL
-    st.session_state.historial.append({"role": "user", "content": pregunta})
-    
-    # OBTENER Y MOSTRAR RESPUESTA
-    with st.chat_message("assistant"):
-        with st.spinner("Pensando en una respuesta útil..."):
-            respuesta = obtener_respuesta_amable(pregunta, st.session_state.historial)
+    # RESPUESTAS TÉCNICAS DE RESERVA
+    respuestas_tecnicas = {
+        'python': [
+            f"**🧠 {tema_nombre}:**\n\nPara tu consulta sobre Python, te recomiendo:\n\n1. **Para scripts simples:** Usa las librerías estándar de Python\n2. **Para datos:** Pandas y NumPy son excelentes\n3. **Para web:** Flask (simple) o Django (completo)\n4. **Para automatización:** Puedes usar Selenium o BeautifulSoup\n\n¿Podrías darme más detalles específicos sobre lo que necesitas?",
+            
+            f"**🧠 {tema_nombre}:**\n\nEn Python, puedes abordar esto de varias maneras. Algunas opciones:\n\n- **Librerías útiles:** requests, pandas, selenium, openpyxl\n- **Patrones comunes:** funciones, clases, manejo de excepciones\n- **Buenas prácticas:** PEP8, documentación, testing\n\n¿Qué aspecto específico te interesa más?"
+        ],
         
-        st.markdown(f"**Asistente:** {respuesta}")
+        'javascript': [
+            f"**🧠 {tema_nombre}:**\n\nPara desarrollo JavaScript considera:\n\n**Frontend:** React, Vue, Angular\n**Backend:** Node.js, Express\n**Móvil:** React Native, Ionic\n**Bases de datos:** MongoDB, Firebase\n\n¿En qué parte del stack necesitas ayuda?",
+        ],
+        
+        'web': [
+            f"**🧠 {tema_nombre}:**\n\nDesarrollo web moderno incluye:\n\n- **Frontend:** HTML5, CSS3, JavaScript ES6+\n- **Frameworks:** React, Vue, Angular\n- **Backend:** Node.js, Python, PHP\n- **Bases de datos:** SQL y NoSQL\n- **DevOps:** Docker, CI/CD\n\n¿Qué tecnología específica te interesa?"
+        ],
+        
+        'general': [
+            f"**🧠 {tema_nombre}:**\n\n¡Excelente pregunta técnica! Para darte la mejor ayuda:\n\n1. ¿Qué lenguaje de programación prefieres?\n2. ¿Tienes algún código existente?\n3. ¿Qué resultado esperas obtener?\n4. ¿Hay requisitos específicos?\n\nCon más detalles, puedo darte una solución más precisa. 😊",
+            
+            f"**🧠 {tema_nombre}:**\n\nInteresante desafío técnico. Podemos abordarlo de varias formas:\n\n- **Análisis del problema** y posibles soluciones\n- **Código de ejemplo** en el lenguaje que prefieras\n- **Optimizaciones** y mejores prácticas\n- **Recursos** para aprender más\n\n¿Por dónde quieres que empecemos?"
+        ]
+    }
     
-    # AGREGAR RESPUESTA AL HISTORIAL
-    st.session_state.historial.append({"role": "assistant", "content": respuesta})
-    
-    # Hacer scroll automático hacia abajo
-    st.rerun()
+    return random.choice(respuestas_tecnicas.get(tema_detectado, respuestas_tecnicas['general']))
 
-# PIE DE PÁGINA AMIGABLE
-st.markdown("---")
-st.markdown(
-    """
-    <div style='text-align: center; color: gray;'>
-        <p>🤖 Asistente Virtual Amable - Creado para ayudar a todos los usuarios</p>
-        <p>💡 Siempre respetuoso y útil • 🌟 100% Gratuito</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-    )
+# SISTEMA DE EJEMPLOS PRÁCTICOS
+def generar_ejemplo_rapido(tema):
+    """Genera ejemplos prácticos según el tema"""
+    ejemplos = {
+        'python': """
+```python
+# Ejemplo práctico de Python
+def procesar_archivos(ruta):
+    \"\"\"Procesa archivos automáticamente\"\"\"
+    import os
+    import pandas as pd
+    
+    for archivo in os.listdir(ruta):
+        if archivo.endswith('.csv'):
+            datos = pd.read_csv(os.path.join(ruta, archivo))
+            # Tu procesamiento aquí
+            print(f\"Procesado: {archivo}\")
+    
+    return "Procesamiento completado"
+
+# ¿Necesitas adaptar este ejemplo a tu caso específico?
