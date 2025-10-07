@@ -2,30 +2,35 @@ import streamlit as st
 import requests
 import random
 import time
+import json
 
 st.set_page_config(page_title="Mi Asistente IA", page_icon="🤖")
-st.title("🤖 Mi Asistente Personal")
-st.write("¡Hola! Estoy aquí para ayudarte con lo que necesites")
+st.title("🤖 Mi Asistente Personal con Memoria")
+st.write("¡Hola! Recuerdo toda nuestra conversación 📝")
 
-# Configuración mejorada
+# Configuración
 headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_TOKEN']}"}
 
 MODELOS = [
     "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
-    "https://api-inquiry.huggingface.co/models/microsoft/DialoGPT-medium",
-    "https://api-inquiry.huggingface.co/models/facebook/blenderbot-400M-distill"
+    "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium", 
+    "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
 ]
 
-def obtener_respuesta_inteligente(mensaje):
-    """Versión mejorada con respuestas más contextuales"""
+def obtener_respuesta_inteligente(mensaje, historial):
+    """Usa el historial para respuestas más contextuales"""
     
-    # Primero intentar con Hugging Face
+    # Construir contexto de la conversación
+    contexto = "\n".join([f"{msg['role']}: {msg['content']}" for msg in historial[-6:]])  # Últimos 6 mensajes
+    prompt_con_contexto = f"{contexto}\nuser: {mensaje}\nassistant:"
+    
+    # Intentar con modelos de Hugging Face
     for modelo_url in MODELOS:
         try:
             response = requests.post(
                 modelo_url,
                 headers=headers,
-                json={"inputs": mensaje, "parameters": {"max_length": 150}},
+                json={"inputs": prompt_con_contexto, "parameters": {"max_length": 200}},
                 timeout=10
             )
             
@@ -34,56 +39,80 @@ def obtener_respuesta_inteligente(mensaje):
                 if resultado and isinstance(resultado, list) and len(resultado) > 0:
                     texto = resultado[0].get('generated_text', '')
                     if texto and len(texto) > 15:
+                        # Extraer solo la respuesta del asistente
+                        if "assistant:" in texto:
+                            texto = texto.split("assistant:")[-1].strip()
                         return texto
             time.sleep(1)
         except:
             continue
     
-    # RESPUESTAS MEJORADAS Y CONTEXTUALES
+    # Respuestas contextuales mejoradas
     mensaje_lower = mensaje.lower()
     
-    # Detectar tipo de pregunta
-    if any(palabra in mensaje_lower for palabra in ['hola', 'hi', 'hello', 'buenas']):
-        return "¡Hola! 👋 Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?"
+    if any(palabra in mensaje_lower for palabra in ['hola', 'hi', 'hello']):
+        return "¡Hola! 👋 Veo que ya hemos estado conversando. ¿En qué más puedo ayudarte?"
     
-    elif any(palabra in mensaje_lower for palabra in ['código', 'code', 'program', 'python', 'script']):
-        return "¡Claro! Puedo ayudarte con código Python. ¿Qué tipo de script necesitas? Por ejemplo: 'quiero un script para descargar videos' o 'necesito un bot de Telegram'"
+    elif any(palabra in mensaje_lower for palabra in ['código', 'code', 'python', 'script']):
+        return "¡Perfecto! Basándome en nuestra conversación anterior, puedo ayudarte con código Python. ¿Qué tipo de funcionalidad específica necesitas?"
     
-    elif any(palabra in mensaje_lower for palabra in ['cómo', 'how', 'funciona', 'ayuda']):
-        return "Puedo ayudarte con: programación, ideas de proyectos, explicaciones técnicas, y mucho más. ¿Qué necesitas específicamente?"
-    
-    elif '?' in mensaje:
-        return "Buena pregunta. Los servicios de IA están ocupados en este momento, pero puedo intentar ayudarte si reformulas tu pregunta o me das más detalles."
+    elif any(palabra in mensaje_lower for palabra in ['gracias', 'thanks', 'bye', 'adiós']):
+        return "¡Ha sido un gusto conversar contigo! 😊 Recuerda que mantengo el historial de nuestra charla por si necesitas continuar después."
     
     else:
         respuestas_contextuales = [
-            f"Entiendo que quieres hablar sobre '{mensaje}'. Los servidores de IA están temporariamente ocupados, pero estoy aquí para ayudarte. ¿Puedes darme más detalles?",
-            f"Interesante pregunta sobre {mensaje}. Los modelos están procesando muchas solicitudes. ¿Te importaría reformularla o intentar en unos minutos?",
-            f"¡Me gusta tu mensaje! Los servicios gratuitos están saturados ahora mismo. Mientras se liberan, ¿hay algo específico en lo que pueda asistirte?",
-            f"Recibí tu mensaje. Los sistemas de IA están al máximo de capacidad. ¿Puedes intentar de nuevo en un momento o ser más específico en tu consulta?"
+            f"Interesante, continuando con nuestro tema anterior. Los servidores están ocupados pero recuerdo lo que hemos hablado.",
+            f"Tomando en cuenta nuestra conversación previa... Los modelos están saturados pero mantengo el contexto.",
+            f"Basándome en lo que hemos discutido antes... Los servicios gratuitos están al máximo pero sigo aquí."
         ]
         return random.choice(respuestas_contextuales)
 
-# Interfaz de chat mejorada
+# INICIALIZAR HISTORIAL
 if "historial" not in st.session_state:
     st.session_state.historial = []
 
-# Mostrar historial
+# BARRA LATERAL CON CONTROLES
+with st.sidebar:
+    st.header("🛠️ Controles del Chat")
+    
+    # Mostrar estadísticas
+    st.write(f"**Mensajes en historial:** {len(st.session_state.historial)}")
+    
+    # Botón para limpiar historial
+    if st.button("🗑️ Limpiar Historial", type="secondary"):
+        st.session_state.historial = []
+        st.rerun()
+    
+    # Botón para exportar conversación
+    if st.button("📤 Exportar Chat", type="secondary"):
+        if st.session_state.historial:
+            chat_text = "\n".join([f"{msg['role']}: {msg['content']}" for msg in st.session_state.historial])
+            st.download_button(
+                label="Descargar conversación",
+                data=chat_text,
+                file_name="mi_conversacion.txt",
+                mime="text/plain"
+            )
+    
+    st.markdown("---")
+    st.write("**💡 Tip:** El bot recuerda hasta 6 mensajes anteriores para mantener contexto")
+
+# MOSTRAR HISTORIAL DE CONVERSACIÓN
+st.subheader("💬 Conversación Actual")
+
 for mensaje in st.session_state.historial:
     with st.chat_message(mensaje["role"]):
         st.markdown(mensaje["content"])
 
-# Input del usuario
-if pregunta := st.chat_input("Escribe tu pregunta aquí..."):
-    # Agregar pregunta del usuario
+# INPUT DEL USUARIO
+if pregunta := st.chat_input("Escribe tu mensaje aquí..."):
+    # Agregar pregunta al historial
     st.session_state.historial.append({"role": "user", "content": pregunta})
-    with st.chat_message("user"):
-        st.markdown(pregunta)
     
-    # Obtener respuesta mejorada
+    # Obtener respuesta usando el historial
     with st.chat_message("assistant"):
-        with st.spinner("Analizando tu pregunta..."):
-            respuesta = obtener_respuesta_inteligente(pregunta)
+        with st.spinner("Pensando en contexto..."):
+            respuesta = obtener_respuesta_inteligente(pregunta, st.session_state.historial)
         
         st.markdown(respuesta)
         st.session_state.historial.append({"role": "assistant", "content": respuesta})
