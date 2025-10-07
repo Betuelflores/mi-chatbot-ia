@@ -1,36 +1,28 @@
 import streamlit as st
-from openai import OpenAI
+import requests
+import random
 
-# Configuración de OpenAI
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
-st.set_page_config(page_title="Mi ChatGPT", page_icon="🤖")
-st.title("🤖 Mi Asistente IA")
-st.write("¡Hola! Pregúntame lo que quieras")
-
-# Chat input
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-if prompt := st.chat_input("Escribe tu mensaje..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
+def try_multiple_free_apis(mensaje):
+    apis = [
+        {
+            "name": "Hugging Face",
+            "url": "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+            "func": lambda msg: requests.post(apis[0]["url"], json={"inputs": msg}).json()
+        }
+    ]
+    
+    for api in apis:
         try:
-            stream = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                stream=True,
-            )
-            
-            response = st.write_stream(stream)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+            response = api["func"](mensaje)
+            if response and len(response) > 0:
+                return f"{api['name']}: {response[0].get('generated_text', 'Respuesta no válida')}"
+        except:
+            continue
+    
+    return "Todos los servicios gratuitos están ocupados. Intenta más tarde."
+
+st.title("🤖 Chatbot Multi-Fuente Gratis")
+user_input = st.text_input("Pregunta:")
+if user_input:
+    respuesta = try_multiple_free_apis(user_input)
+    st.write(respuesta)
