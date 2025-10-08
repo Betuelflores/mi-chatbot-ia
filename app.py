@@ -8,12 +8,11 @@ import os
 
 st.set_page_config(page_title="Bot Código sin Token", page_icon="🤖", layout="wide")
 st.title("🤖 Bot Asistente de Código sin Token")
-st.markdown("Envía tu pregunta o petición de código y recibe respuestas usando un modelo gratuito de Hugging Face Inference API sin token.")
+st.markdown("Preguntame lo que sea o pedime código, ¡te ayudo con respuestas gratuitas!")
 
 def llamar_space(mensaje: str) -> str:
-    # Usa la Inference API gratuita de Hugging Face (sin token para uso básico)
-    url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
-    payload = {"inputs": mensaje}
+    url = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M"  # Modelo más conversacional
+    payload = {"inputs": mensaje, "parameters": {"max_length": 100}}  # Más texto
     try:
         resp = requests.post(url, json=payload, timeout=20)
         if resp.status_code == 200:
@@ -21,10 +20,9 @@ def llamar_space(mensaje: str) -> str:
         else:
             return f"Error: {resp.status_code} - {resp.text}"
     except Exception as e:
-        return f"Excepción al llamar al API: {e}"
+        return f"Excepción: {e}"
 
 def extraer_codigo(texto: str) -> str:
-    # Busca bloques de código Python entre triple backticks
     bloques = re.findall(r"```(?:python)?\n(.*?)```", texto, re.DOTALL)
     return "\n\n".join(bloques).strip() if bloques else ""
 
@@ -42,21 +40,20 @@ def ejecutar_python_simple(codigo: str, timeout: int = 5):
         )
         return proc.stdout.decode("utf-8"), proc.stderr.decode("utf-8")
     except subprocess.TimeoutExpired:
-        return "", "Tiempo excedido al ejecutar el código."
+        return "", "Tiempo excedido."
     except Exception as e:
-        return "", f"Error ejecutando código: {e}"
+        return "", f"Error: {e}"
     finally:
         shutil.rmtree(tmp)
 
-mensaje = st.text_input("Escribe tu pregunta o petición de código:")
+mensaje = st.text_input("Escribe tu pregunta o pedí código (ej: 'suma 2+2' o 'escribe un código para sumar'):")
 if mensaje:
     respuesta = llamar_space(mensaje)
     st.write("Respuesta completa:")
     st.write(respuesta)
 
-    # Extraer texto relevante del JSON
     texto = ""
-    if isinstance(respuesta, dict) and "generated_text" in respuesta[0]:  # Ajustado para DialoGPT
+    if isinstance(respuesta, list) and "generated_text" in respuesta[0]:
         texto = respuesta[0]["generated_text"]
     else:
         texto = str(respuesta)
@@ -67,14 +64,13 @@ if mensaje:
     if codigo:
         st.subheader("Código extraído:")
         st.code(codigo, language="python")
-
-        if st.button("Ejecutar código extraído"):
+        if st.button("Ejecutar código"):
             salida, error = ejecutar_python_simple(codigo)
             if salida:
-                st.subheader("Salida del código:")
+                st.subheader("Salida:")
                 st.code(salida)
             if error:
-                st.subheader("Errores de ejecución:")
+                st.subheader("Errores:")
                 st.error(error)
     else:
-        st.info("No se detectó código Python en la respuesta.")
+        st.info("No detecté código Python, ¡seguí preguntando!")
