@@ -176,7 +176,7 @@ Respuesta general:"""
     
     return random.choice(respuestas_tecnicas.get(tema_detectado, respuestas_tecnicas['general']))
 
-# SISTEMA DE EJEMPLOS PRÁCTICOS
+# SISTEMA DE EJEMPLOS PRÁCTICOS - CORREGIDO
 def generar_ejemplo_rapido(tema):
     """Genera ejemplos prácticos según el tema"""
     ejemplos = {
@@ -192,7 +192,7 @@ def procesar_archivos(ruta):
         if archivo.endswith('.csv'):
             datos = pd.read_csv(os.path.join(ruta, archivo))
             # Tu procesamiento aquí
-            print(f\"Procesado: {archivo}\")
+            print(f"Procesado: {archivo}")
     
     return "Procesamiento completado"
 
