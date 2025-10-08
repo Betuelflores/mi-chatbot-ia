@@ -8,12 +8,12 @@ import os
 
 st.set_page_config(page_title="Bot Código sin Token", page_icon="🤖", layout="wide")
 st.title("🤖 Bot Asistente de Código sin Token")
-st.markdown("Envía tu pregunta o petición de código y recibe respuestas usando un modelo gratuito de Hugging Face Spaces sin token.")
+st.markdown("Envía tu pregunta o petición de código y recibe respuestas usando un modelo gratuito de Hugging Face Inference API sin token.")
 
 def llamar_space(mensaje: str) -> str:
-    # Cambia esta URL por un Space público que acepte POST sin token
-    url = "https://yuntian-deng-chatgpt.hf.space/run/predict"  # Ejemplo, puede cambiar
-    payload = {"data": [mensaje]}
+    # Usa la Inference API gratuita de Hugging Face (sin token para uso básico)
+    url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
+    payload = {"inputs": mensaje}
     try:
         resp = requests.post(url, json=payload, timeout=20)
         if resp.status_code == 200:
@@ -21,7 +21,7 @@ def llamar_space(mensaje: str) -> str:
         else:
             return f"Error: {resp.status_code} - {resp.text}"
     except Exception as e:
-        return f"Excepción al llamar al Space: {e}"
+        return f"Excepción al llamar al API: {e}"
 
 def extraer_codigo(texto: str) -> str:
     # Busca bloques de código Python entre triple backticks
@@ -54,10 +54,10 @@ if mensaje:
     st.write("Respuesta completa:")
     st.write(respuesta)
 
-    # Extraer texto relevante del JSON (depende del Space)
+    # Extraer texto relevante del JSON
     texto = ""
-    if isinstance(respuesta, dict) and "data" in respuesta:
-        texto = respuesta["data"][0]
+    if isinstance(respuesta, dict) and "generated_text" in respuesta[0]:  # Ajustado para DialoGPT
+        texto = respuesta[0]["generated_text"]
     else:
         texto = str(respuesta)
 
