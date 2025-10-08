@@ -8,7 +8,6 @@ st.set_page_config(page_title="Asistente Universal de Código", page_icon="🚀"
 st.title("🚀 Asistente Universal de Programación")
 st.markdown("**Como ChatGPT + Gemini + Grok - Pero 100% Gratis y para Todos**")
 
-# Configuración avanzada
 headers = {"Authorization": f"Bearer {st.secrets['HUGGINGFACE_TOKEN']}"}
 
 class AsistenteUniversal:
@@ -47,12 +46,9 @@ class AsistenteUniversal:
         return 'general'
 
 def obtener_respuesta_universal(mensaje, historial, tema_detectado):
-    """Motor de respuestas universal para cualquier tema técnico"""
-    
     asistente = AsistenteUniversal()
     tema_nombre = asistente.especialidades.get(tema_detectado, "Programación General")
     
-    # MODELOS AVANZADOS PARA DIFERENTES TAREAS
     modelos_tecnicos = [
         "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large",
         "https://api-inference.huggingface.co/models/codeparrot/codeparrot",
@@ -60,7 +56,6 @@ def obtener_respuesta_universal(mensaje, historial, tema_detectado):
         "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
     ]
     
-    # PROMPT ESPECIALIZADO SEGÚN EL TEMA
     prompts_especializados = {
         'python': f"""Eres un experto en Python. Responde sobre: {mensaje}
         
@@ -121,7 +116,6 @@ Respuesta general:"""
     
     prompt = prompts_especializados.get(tema_detectado, prompts_especializados['general'])
     
-    # Intentar con modelos técnicos
     for modelo_url in modelos_tecnicos:
         try:
             response = requests.post(
@@ -143,7 +137,6 @@ Respuesta general:"""
                 if resultado and isinstance(resultado, list) and len(resultado) > 0:
                     texto = resultado[0].get('generated_text', '')
                     if texto and len(texto) > 25:
-                        # Limpiar y formatear la respuesta
                         if "Respuesta" in texto:
                             texto = texto.split("Respuesta")[-1].replace(":", "").strip()
                         return f"**🧠 {tema_nombre}:**\n\n{texto}"
@@ -151,7 +144,6 @@ Respuesta general:"""
         except:
             continue
     
-    # RESPUESTAS TÉCNICAS DE RESERVA
     respuestas_tecnicas = {
         'python': [
             f"**🧠 {tema_nombre}:**\n\nPara tu consulta sobre Python, te recomiendo:\n\n1. **Para scripts simples:** Usa las librerías estándar de Python\n2. **Para datos:** Pandas y NumPy son excelentes\n3. **Para web:** Flask (simple) o Django (completo)\n4. **Para automatización:** Puedes usar Selenium o BeautifulSoup\n\n¿Podrías darme más detalles específicos sobre lo que necesitas?",
@@ -176,24 +168,18 @@ Respuesta general:"""
     
     return random.choice(respuestas_tecnicas.get(tema_detectado, respuestas_tecnicas['general']))
 
-# SISTEMA DE EJEMPLOS PRÁCTICOS - CORREGIDO
 def generar_ejemplo_rapido(tema):
-    """Genera ejemplos prácticos según el tema"""
     ejemplos = {
         'python': """
 ```python
 # Ejemplo práctico de Python
 def procesar_archivos(ruta):
-    \"\"\"Procesa archivos automáticamente\"\"\"
     import os
     import pandas as pd
     
     for archivo in os.listdir(ruta):
         if archivo.endswith('.csv'):
             datos = pd.read_csv(os.path.join(ruta, archivo))
-            # Tu procesamiento aquí
             print(f"Procesado: {archivo}")
     
     return "Procesamiento completado"
-
-# ¿Necesitas adaptar este ejemplo a tu caso específico?
